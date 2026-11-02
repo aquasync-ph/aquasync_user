@@ -113,11 +113,12 @@ class SupabaseService {
       }
 
       num? radiusVal = data['coverage_radius_km'] ??
+          data['geofence_radius_km'] ??
+          data['radius_km'] ??
           data['coverage_radius'] ??
           data['geofence_radius'] ??
           data['delivery_radius'] ??
           data['proximity_radius'] ??
-          data['radius_km'] ??
           data['radius'] ??
           data['max_distance_km'];
 
@@ -186,34 +187,32 @@ class SupabaseService {
       }
     }
 
-    // 1. Try station_settings / system_settings / store_settings / app_settings
+    // 1. PRIORITIZE PROFILES TABLE (where Admin directly saves updated latitude, longitude, and coverage_radius_km)
+    try {
+      final adminProfile = await client
+          .from('profiles')
+          .select()
+          .or('role.eq.admin,role.eq.owner,role.eq.station,role.eq.cashier')
+          .order('updated_at', ascending: false)
+          .limit(1)
+          .maybeSingle();
+
+      if (adminProfile != null) {
+        applyData(adminProfile);
+      }
+    } catch (e) {
+      debugPrint('fetchShopProfile profiles table query error: $e');
+    }
+
+    // 2. Fallback / Additional check on station_settings / system_settings / store_settings / etc.
     final tablesToTry = ['station_settings', 'system_settings', 'store_settings', 'shop_settings', 'app_settings', 'stations'];
     for (final tbl in tablesToTry) {
       try {
         final settings = await client.from(tbl).select().limit(1).maybeSingle();
         if (settings != null) {
           applyData(settings);
-          if ((shopProfile['latitude'] as double) != 14.2290 || (shopProfile['coverage_radius_km'] as double) != 0.5 || shopProfile['explicit_status'] == true) {
-            break;
-          }
         }
       } catch (_) {}
-    }
-
-    // 2. Try profiles table for admin / owner / cashier / station role
-    try {
-      final adminProfile = await client
-          .from('profiles')
-          .select()
-          .or('role.eq.admin,role.eq.cashier,role.eq.owner,role.eq.station')
-          .not('latitude', 'is', null)
-          .order('updated_at', ascending: false)
-          .limit(1)
-          .maybeSingle();
-
-      applyData(adminProfile);
-    } catch (e) {
-      debugPrint('fetchShopProfile admin profile query error: $e');
     }
 
     return shopProfile;
