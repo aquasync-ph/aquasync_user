@@ -1115,8 +1115,8 @@ class _OrderFormScreenState extends State<OrderFormScreen> {
             ),
             const SizedBox(height: 24),
 
-            // 4. DELIVERY OPTION & ADDRESS
-            _sectionHeader('4', 'DELIVERY OPTION & ADDRESS'),
+            // 4. DELIVERY ADDRESS
+            _sectionHeader('4', 'DELIVERY ADDRESS'),
             const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.all(16),
@@ -1131,276 +1131,50 @@ class _OrderFormScreenState extends State<OrderFormScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: InkWell(
-                          onTap: () {
-                            HapticFeedback.lightImpact();
-                            setState(() {
-                              _deliveryMode = 'delivery';
-                              final profile = Provider.of<UserProvider>(context, listen: false).profile;
-                              _addressController.text = profile?.address ?? '';
-                            });
-                          },
-                          borderRadius: BorderRadius.circular(16),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
-                            decoration: BoxDecoration(
-                              gradient: _deliveryMode == 'delivery'
-                                  ? const LinearGradient(
-                                      colors: [Color(0xFF0284C7), Color(0xFF0EA5E9)],
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                    )
-                                  : null,
-                              color: _deliveryMode == 'delivery' ? null : cardBg,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: _deliveryMode == 'delivery' ? const Color(0xFF0284C7) : borderColor,
-                                width: _deliveryMode == 'delivery' ? 1.5 : 1,
-                              ),
-                              boxShadow: _deliveryMode == 'delivery'
-                                  ? [
-                                      BoxShadow(
-                                        color: const Color(0xFF0284C7).withValues(alpha: 0.3),
-                                        blurRadius: 10,
-                                        offset: const Offset(0, 4),
-                                      ),
-                                    ]
-                                  : null,
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.local_shipping_rounded,
-                                  color: _deliveryMode == 'delivery' ? Colors.white : const Color(0xFF0284C7),
-                                  size: 18,
-                                ),
-                                const SizedBox(width: 6),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(
-                                        'Home Delivery',
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: TextStyle(
-                                          color: _deliveryMode == 'delivery' ? Colors.white : textColor,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                      Text(
-                                        'Doorstep drop-off',
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: TextStyle(
-                                          color: _deliveryMode == 'delivery' ? Colors.white70 : subTextColor,
-                                          fontSize: 9.5,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: InkWell(
-                          onTap: () {
-                            HapticFeedback.lightImpact();
-                            setState(() {
-                              _deliveryMode = 'pickup';
-                              _addressController.text = 'Counter Walk-in / Station Pickup';
-                            });
-                          },
-                          borderRadius: BorderRadius.circular(16),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
-                            decoration: BoxDecoration(
-                              gradient: _deliveryMode == 'pickup'
-                                  ? const LinearGradient(
-                                      colors: [Color(0xFF0284C7), Color(0xFF0EA5E9)],
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                    )
-                                  : null,
-                              color: _deliveryMode == 'pickup' ? null : cardBg,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: _deliveryMode == 'pickup' ? const Color(0xFF0284C7) : borderColor,
-                                width: _deliveryMode == 'pickup' ? 1.5 : 1,
-                              ),
-                              boxShadow: _deliveryMode == 'pickup'
-                                  ? [
-                                      BoxShadow(
-                                        color: const Color(0xFF0284C7).withValues(alpha: 0.3),
-                                        blurRadius: 10,
-                                        offset: const Offset(0, 4),
-                                      ),
-                                    ]
-                                  : null,
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.storefront_rounded,
-                                  color: _deliveryMode == 'pickup' ? Colors.white : const Color(0xFF0284C7),
-                                  size: 18,
-                                ),
-                                const SizedBox(width: 6),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(
-                                        'Station Pickup',
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: TextStyle(
-                                          color: _deliveryMode == 'pickup' ? Colors.white : textColor,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                      Text(
-                                        'Counter walk-in',
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: TextStyle(
-                                          color: _deliveryMode == 'pickup' ? Colors.white70 : subTextColor,
-                                          fontSize: 9.5,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+                  TextFormField(
+                    controller: _addressController,
+                    enabled: !_isSubmitting,
+                    maxLines: 2,
+                    maxLength: 200,
+                    style: TextStyle(color: textColor, fontWeight: FontWeight.w600, fontSize: 14),
+                    decoration: const InputDecoration(
+                      labelText: 'Complete Delivery Address *',
+                      hintText: 'House No, Street, Barangay, City',
+                      counterText: '',
+                      prefixIcon: Icon(Icons.location_on_rounded, color: Color(0xFF0284C7)),
+                      alignLabelWithHint: true,
+                    ),
+                    validator: OrderFormValidationUtils.validateAddress,
                   ),
-                  const SizedBox(height: 16),
-                  if (_deliveryMode == 'delivery') ...[
-                    TextFormField(
-                      controller: _addressController,
-                      enabled: !_isSubmitting,
-                      maxLines: 2,
-                      maxLength: 200,
-                      style: TextStyle(color: textColor, fontWeight: FontWeight.w600, fontSize: 14),
-                      decoration: const InputDecoration(
-                        labelText: 'Complete Delivery Address *',
-                        hintText: 'House No, Street, Barangay, City',
-                        counterText: '',
-                        prefixIcon: Icon(Icons.location_on_rounded, color: Color(0xFF0284C7)),
-                        alignLabelWithHint: true,
-                      ),
-                      validator: OrderFormValidationUtils.validateAddress,
-                    ),
-                    const SizedBox(height: 12),
-                    InkWell(
-                      onTap: _isSubmitting ? null : _pickLocationOnMap,
-                      borderRadius: BorderRadius.circular(14),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF0284C7).withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: const Color(0xFF0284C7).withValues(alpha: 0.3)),
-                        ),
-                        child: const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.map_rounded, color: Color(0xFF0284C7), size: 18),
-                            SizedBox(width: 8),
-                            Flexible(
-                              child: Text(
-                                'PIN LOCATION ON MAP',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(color: Color(0xFF0284C7), fontWeight: FontWeight.w800, fontSize: 12, letterSpacing: 0.5),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    _buildGeofenceBadge(),
-                  ] else ...[
-                    Container(
-                      padding: const EdgeInsets.all(12),
+                  const SizedBox(height: 12),
+                  InkWell(
+                    onTap: _isSubmitting ? null : _pickLocationOnMap,
+                    borderRadius: BorderRadius.circular(14),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF10B981).withValues(alpha: 0.1),
+                        color: const Color(0xFF0284C7).withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3)),
+                        border: Border.all(color: const Color(0xFF0284C7).withValues(alpha: 0.3)),
                       ),
-                      child: Row(
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.check_circle_outline_rounded, color: Color(0xFF10B981), size: 20),
-                          const SizedBox(width: 10),
-                          Expanded(
+                          Icon(Icons.map_rounded, color: Color(0xFF0284C7), size: 18),
+                          SizedBox(width: 8),
+                          Flexible(
                             child: Text(
-                              'Pick up directly at $_stationName. No delivery fee or boundary check required.',
-                              style: const TextStyle(fontSize: 12, color: Color(0xFF065F46), fontWeight: FontWeight.bold),
+                              'PIN LOCATION ON MAP',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(color: Color(0xFF0284C7), fontWeight: FontWeight.w800, fontSize: 12, letterSpacing: 0.5),
                             ),
                           ),
                         ],
                       ),
                     ),
-                  ],
-                  const SizedBox(height: 18),
-
-                  // Delivery Date Picker
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('Delivery Date', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: textColor)),
-                            const SizedBox(height: 6),
-                            InkWell(
-                              onTap: _isSubmitting ? null : _selectDeliveryDate,
-                              borderRadius: BorderRadius.circular(12),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: borderColor),
-                                ),
-                                child: Row(
-                                  children: [
-                                    const Icon(Icons.calendar_today_rounded, size: 16, color: Color(0xFF0284C7)),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: Text(
-                                        DateFormat('MMM dd, yyyy').format(_deliveryDate),
-                                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: textColor),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
                   ),
+                  _buildGeofenceBadge(),
                   const SizedBox(height: 14),
                 ],
               ),
@@ -1458,17 +1232,7 @@ class _OrderFormScreenState extends State<OrderFormScreen> {
     );
   }
 
-  Future<void> _selectDeliveryDate() async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _deliveryDate,
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(const Duration(days: 7)),
-    );
-    if (picked != null) {
-      setState(() => _deliveryDate = picked);
-    }
-  }
+
 
   // STEP 2 PAGE: Order Summary, Voucher Code, Payment Method
   Widget _buildStep2Page(

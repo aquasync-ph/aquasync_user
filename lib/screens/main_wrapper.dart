@@ -49,7 +49,21 @@ class _MainWrapperState extends State<MainWrapper> {
     });
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      // SECURITY GUARD: Prevent direct URL access by unauthenticated or unauthorized users
+      if (!SupabaseService.isAuthenticated) {
+        Navigator.of(context).pushReplacementNamed('/login');
+        return;
+      }
+      
       final userProvider = Provider.of<UserProvider>(context, listen: false);
+      final userRole = userProvider.profile?.role.toLowerCase() ?? 'customer';
+      
+      if (userRole != 'customer') {
+        await SupabaseService.signOut();
+        if (mounted) Navigator.of(context).pushReplacementNamed('/login');
+        return;
+      }
+
       final userId = userProvider.profile?.id ?? SupabaseService.currentUser?.id ?? '';
       
       // Initialize Real-Time Notifications and Orders immediately upon app startup / login

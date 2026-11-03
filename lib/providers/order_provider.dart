@@ -290,6 +290,13 @@ class OrderProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  void clearData() {
+    _activeOrder = null;
+    _history.clear();
+    _subscribedCustomerId = null;
+    notifyListeners();
+  }
+
   void clearActiveOrder() {
     _activeOrder = null;
     notifyListeners();

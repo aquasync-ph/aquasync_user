@@ -158,7 +158,7 @@ class UserProvider with ChangeNotifier {
             if (finalFullName.isNotEmpty) 'full_name': finalFullName,
             if (finalPhone.isNotEmpty) 'phone': finalPhone,
             if (finalAddress.isNotEmpty) 'address': finalAddress,
-            'role': 'customer',
+            // SECURITY: Do not overwrite role to prevent Admin privilege downgrades
             'is_verified': true,
             'status': 'active',
             'approval_status': 'approved',
@@ -197,7 +197,7 @@ class UserProvider with ChangeNotifier {
           'full_name': _profile!.fullName,
           'phone': _profile!.phone,
           'address': _profile!.address,
-          'role': 'customer',
+          // SECURITY: Do not force 'role' to avoid overriding metadata defaults
           'is_verified': true,
           'status': 'active',
           'approval_status': 'approved',

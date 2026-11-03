@@ -287,6 +287,16 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
         final profileData = await SupabaseService.fetchProfile(user.id);
 
         if (profileData != null) {
+          final role = (profileData['role'] as String?)?.toLowerCase() ?? 'customer';
+          if (role != 'customer') {
+            await SupabaseService.signOut();
+            if (!mounted) return;
+            _shake();
+            TopBanner.show(context, 'Access Denied: This app is strictly for Customers only.', isError: true);
+            setState(() => _isLoading = false);
+            return;
+          }
+
           final isBlocked = (profileData['is_blocked'] as bool?) ?? false;
           final status = (profileData['status'] as String?)?.toLowerCase();
           if (isBlocked || status == 'blocked' || status == 'inactive' || status == 'disabled') {

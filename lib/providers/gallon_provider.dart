@@ -141,6 +141,15 @@ class GallonProvider with ChangeNotifier {
         .subscribe();
   }
 
+  void clearData() {
+    _activeGallons.clear();
+    _history.clear();
+    _subscribedCustomerId = null;
+    _gallonChannel?.unsubscribe();
+    _gallonChannel = null;
+    notifyListeners();
+  }
+
   @override
   void dispose() {
     _gallonChannel?.unsubscribe();

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -13,6 +14,7 @@ import 'screens/order_tracker_screen.dart';
 import 'providers/notification_provider.dart';
 import 'providers/settings_provider.dart';
 import 'providers/announcement_provider.dart';
+import 'services/supabase_service.dart';
 import 'screens/notification_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/onboarding_screen.dart';
@@ -48,8 +50,74 @@ void main() async {
   );
 }
 
-class AquaSyncApp extends StatelessWidget {
+class AquaSyncApp extends StatefulWidget {
   const AquaSyncApp({super.key});
+
+  @override
+  State<AquaSyncApp> createState() => _AquaSyncAppState();
+}
+
+class _AquaSyncAppState extends State<AquaSyncApp> {
+  late final StreamSubscription<AuthState> _authSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    // Global Auth State listener for robust session management
+    _authSubscription = Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+      final AuthChangeEvent event = data.event;
+      final Session? session = data.session;
+
+      if (event == AuthChangeEvent.signedOut) {
+        _handleSignOut();
+      } else if (event == AuthChangeEvent.signedIn && session != null) {
+        _handleSignIn();
+      }
+    });
+  }
+
+  void _handleSignOut() {
+    // 1. Unsubscribe from real-time channels
+    SupabaseService.unsubscribeCustomerOrders();
+    SupabaseService.unsubscribeCustomerNotifications();
+
+    // 2. Clear global states to prevent data leakage between sessions
+    if (navigatorKey.currentContext != null) {
+      final context = navigatorKey.currentContext!;
+      Provider.of<UserProvider>(context, listen: false).logout();
+      Provider.of<OrderProvider>(context, listen: false).clearData();
+      Provider.of<NotificationProvider>(context, listen: false).clearAll();
+      Provider.of<GallonProvider>(context, listen: false).clearData();
+    }
+
+    // 3. Navigate back to login
+    navigatorKey.currentState?.pushNamedAndRemoveUntil('/login', (route) => false);
+    
+    // Optional: Show session expired banner if appropriate
+    if (navigatorKey.currentContext != null) {
+      ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+        const SnackBar(
+          content: Text('Session expired or logged out.'),
+          backgroundColor: Colors.redAccent,
+          duration: Duration(seconds: 3),
+        ),
+      );
+    }
+  }
+
+  void _handleSignIn() {
+    // Pre-fetch critical user data when signed in
+    if (navigatorKey.currentContext != null) {
+      final context = navigatorKey.currentContext!;
+      Provider.of<UserProvider>(context, listen: false).initializeFromSupabase();
+    }
+  }
+
+  @override
+  void dispose() {
+    _authSubscription.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {

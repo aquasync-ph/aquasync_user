@@ -80,6 +80,14 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
 
         final profileData = await SupabaseService.fetchProfile(currentUser.id);
 
+        // Security Authorization Check: Only Customers allowed
+        final role = (profileData?['role'] as String?)?.toLowerCase() ?? 'customer';
+        if (role != 'customer') {
+          await SupabaseService.signOut();
+          if (mounted) nav.pushReplacementNamed('/login');
+          return;
+        }
+
         final metaVerified = (currentUser.userMetadata?['is_verified'] as bool?) ?? false;
         final emailConfirmed = currentUser.emailConfirmedAt != null;
         final profileVerified = (profileData?['is_verified'] as bool?) ?? false;
