@@ -145,7 +145,6 @@ class _OrderFormScreenState extends State<OrderFormScreen> {
   late TextEditingController _recipientNameController;
   late TextEditingController _phoneController;
   late TextEditingController _addressController;
-  final TextEditingController _notesController = TextEditingController();
   final TextEditingController _promoController = TextEditingController();
   final TextEditingController _gcashRefController = TextEditingController();
   final TextEditingController _paidAmountController = TextEditingController();
@@ -172,14 +171,6 @@ class _OrderFormScreenState extends State<OrderFormScreen> {
 
   // Delivery Scheduling
   DateTime _deliveryDate = DateTime.now();
-  String _selectedTimeSlot = '08:00 AM - 10:00 AM';
-  final List<String> _timeSlots = [
-    '08:00 AM - 10:00 AM',
-    '10:00 AM - 12:00 PM',
-    '01:00 PM - 03:00 PM',
-    '03:00 PM - 05:00 PM',
-    '05:00 PM - 06:00 PM',
-  ];
 
   String _paymentMethod = 'Cash on Delivery';
   String _deliveryMode = 'delivery'; // 'delivery' or 'pickup'
@@ -412,7 +403,6 @@ class _OrderFormScreenState extends State<OrderFormScreen> {
     _recipientNameController.dispose();
     _phoneController.dispose();
     _addressController.dispose();
-    _notesController.dispose();
     _promoController.dispose();
     _gcashRefController.dispose();
     _paidAmountController.dispose();
@@ -779,9 +769,9 @@ class _OrderFormScreenState extends State<OrderFormScreen> {
         phoneE164 = '+63${rawPhone.substring(1)}';
       }
       final formattedDateStr = DateFormat('yyyy-MM-dd').format(_deliveryDate);
-
-      String finalNotes = OrderFormValidationUtils.sanitizeInput(_notesController.text);
-      final headerMeta = 'Recipient: $recipientName ($phoneE164) | Schedule: $formattedDateStr ($_selectedTimeSlot)';
+      final modeStr = _deliveryMode == 'delivery' ? 'Home Delivery' : 'Station Pickup';
+      final headerMeta = 'Recipient: $recipientName ($phoneE164) | Mode: $modeStr | Date: $formattedDateStr';
+      String finalNotes = '';
 
       String? uploadedReceiptUrl;
       String? gcashReference;
@@ -1153,33 +1143,68 @@ class _OrderFormScreenState extends State<OrderFormScreen> {
                               _addressController.text = profile?.address ?? '';
                             });
                           },
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(16),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+                            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
                             decoration: BoxDecoration(
-                              color: _deliveryMode == 'delivery'
-                                  ? const Color(0xFF0284C7)
-                                  : cardBg,
-                              borderRadius: BorderRadius.circular(14),
+                              gradient: _deliveryMode == 'delivery'
+                                  ? const LinearGradient(
+                                      colors: [Color(0xFF0284C7), Color(0xFF0EA5E9)],
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                    )
+                                  : null,
+                              color: _deliveryMode == 'delivery' ? null : cardBg,
+                              borderRadius: BorderRadius.circular(16),
                               border: Border.all(
                                 color: _deliveryMode == 'delivery' ? const Color(0xFF0284C7) : borderColor,
+                                width: _deliveryMode == 'delivery' ? 1.5 : 1,
                               ),
+                              boxShadow: _deliveryMode == 'delivery'
+                                  ? [
+                                      BoxShadow(
+                                        color: const Color(0xFF0284C7).withValues(alpha: 0.3),
+                                        blurRadius: 10,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ]
+                                  : null,
                             ),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
+                              mainAxisSize: MainAxisSize.min,
                               children: [
                                 Icon(
                                   Icons.local_shipping_rounded,
-                                  color: _deliveryMode == 'delivery' ? Colors.white : subTextColor,
+                                  color: _deliveryMode == 'delivery' ? Colors.white : const Color(0xFF0284C7),
                                   size: 18,
                                 ),
                                 const SizedBox(width: 6),
-                                Text(
-                                  'Home Delivery',
-                                  style: TextStyle(
-                                    color: _deliveryMode == 'delivery' ? Colors.white : textColor,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 12,
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        'Home Delivery',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          color: _deliveryMode == 'delivery' ? Colors.white : textColor,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                      Text(
+                                        'Doorstep drop-off',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          color: _deliveryMode == 'delivery' ? Colors.white70 : subTextColor,
+                                          fontSize: 9.5,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ],
@@ -1197,33 +1222,68 @@ class _OrderFormScreenState extends State<OrderFormScreen> {
                               _addressController.text = 'Counter Walk-in / Station Pickup';
                             });
                           },
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(16),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+                            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
                             decoration: BoxDecoration(
-                              color: _deliveryMode == 'pickup'
-                                  ? const Color(0xFF0284C7)
-                                  : cardBg,
-                              borderRadius: BorderRadius.circular(14),
+                              gradient: _deliveryMode == 'pickup'
+                                  ? const LinearGradient(
+                                      colors: [Color(0xFF0284C7), Color(0xFF0EA5E9)],
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                    )
+                                  : null,
+                              color: _deliveryMode == 'pickup' ? null : cardBg,
+                              borderRadius: BorderRadius.circular(16),
                               border: Border.all(
                                 color: _deliveryMode == 'pickup' ? const Color(0xFF0284C7) : borderColor,
+                                width: _deliveryMode == 'pickup' ? 1.5 : 1,
                               ),
+                              boxShadow: _deliveryMode == 'pickup'
+                                  ? [
+                                      BoxShadow(
+                                        color: const Color(0xFF0284C7).withValues(alpha: 0.3),
+                                        blurRadius: 10,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ]
+                                  : null,
                             ),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
+                              mainAxisSize: MainAxisSize.min,
                               children: [
                                 Icon(
                                   Icons.storefront_rounded,
-                                  color: _deliveryMode == 'pickup' ? Colors.white : subTextColor,
+                                  color: _deliveryMode == 'pickup' ? Colors.white : const Color(0xFF0284C7),
                                   size: 18,
                                 ),
                                 const SizedBox(width: 6),
-                                Text(
-                                  'Station Pickup',
-                                  style: TextStyle(
-                                    color: _deliveryMode == 'pickup' ? Colors.white : textColor,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 12,
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        'Station Pickup',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          color: _deliveryMode == 'pickup' ? Colors.white : textColor,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                      Text(
+                                        'Counter walk-in',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          color: _deliveryMode == 'pickup' ? Colors.white70 : subTextColor,
+                                          fontSize: 9.5,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ],
@@ -1342,48 +1402,6 @@ class _OrderFormScreenState extends State<OrderFormScreen> {
                     ],
                   ),
                   const SizedBox(height: 14),
-
-                  // Delivery Time Slot Dropdown
-                  Text('Preferred Delivery Time Slot', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: textColor)),
-                  const SizedBox(height: 6),
-                  DropdownButtonFormField<String>(
-                    value: _selectedTimeSlot,
-                    decoration: InputDecoration(
-                      prefixIcon: const Icon(Icons.access_time_rounded, color: Color(0xFF0284C7)),
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                    ),
-                    items: _timeSlots.map((slot) {
-                      return DropdownMenuItem<String>(
-                        value: slot,
-                        child: Text(slot, style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: textColor)),
-                      );
-                    }).toList(),
-                    onChanged: _isSubmitting
-                        ? null
-                        : (val) {
-                            if (val != null) {
-                              setState(() => _selectedTimeSlot = val);
-                            }
-                          },
-                  ),
-                  const SizedBox(height: 14),
-
-                  TextFormField(
-                    controller: _notesController,
-                    enabled: !_isSubmitting,
-                    maxLength: 250,
-                    style: TextStyle(color: textColor, fontSize: 14),
-                    decoration: const InputDecoration(
-                      labelText: 'Special Delivery Instructions (Optional)',
-                      hintText: 'e.g., Leave at gate / Ring doorbell...',
-                      counterText: '',
-                      prefixIcon: Icon(Icons.notes_rounded, color: Color(0xFF0284C7)),
-                    ),
-                    validator: OrderFormValidationUtils.validateDeliveryNotes,
-                  ),
                 ],
               ),
             ),

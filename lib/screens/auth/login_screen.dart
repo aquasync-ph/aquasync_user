@@ -1098,7 +1098,7 @@ class _ForgotPasswordDialogState extends State<ForgotPasswordDialog> {
       }
 
       if (!isOtpValid) {
-        if (enteredOtp == _generatedOtp || enteredOtp == '123456') {
+        if (enteredOtp == _generatedOtp) {
           isOtpValid = true;
         }
       }
