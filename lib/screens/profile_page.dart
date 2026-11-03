@@ -521,10 +521,11 @@ class _ProfilePageState extends State<ProfilePage> {
 
                   // Sign Out Button
                   InkWell(
-                    onTap: () {
+                    onTap: () async {
                       HapticFeedback.mediumImpact();
-                      Provider.of<UserProvider>(context, listen: false).logout();
-                      Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+                      try {
+                        await SupabaseService.signOut();
+                      } catch (_) {}
                     },
                     borderRadius: BorderRadius.circular(20),
                     child: Container(

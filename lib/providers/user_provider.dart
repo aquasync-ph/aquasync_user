@@ -299,10 +299,7 @@ class UserProvider with ChangeNotifier {
     }
   }
 
-  Future<void> logout() async {
-    try {
-      await SupabaseService.signOut();
-    } catch (_) {}
+  void logout() {
     _profile = null;
     notifyListeners();
   }
