@@ -92,17 +92,6 @@ class _AquaSyncAppState extends State<AquaSyncApp> {
 
     // 3. Navigate back to login
     navigatorKey.currentState?.pushNamedAndRemoveUntil('/login', (route) => false);
-    
-    // Optional: Show session expired banner if appropriate
-    if (navigatorKey.currentContext != null) {
-      ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
-        const SnackBar(
-          content: Text('Session expired or logged out.'),
-          backgroundColor: Colors.redAccent,
-          duration: Duration(seconds: 3),
-        ),
-      );
-    }
   }
 
   void _handleSignIn() {
