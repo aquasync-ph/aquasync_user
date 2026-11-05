@@ -4,6 +4,12 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 class EmailService {
+  // 🔑 EmailJS Configuration (RECOMMENDED & PERMANENT: Sends directly via your Gmail!)
+  // Setup in 2 mins at https://emailjs.com (100% Free, 200 emails/mo, NEVER suspended!)
+  static String emailJsServiceId = 'service_y537d2p';
+  static String emailJsTemplateId = 'template_c4wfds1';
+  static String emailJsPublicKey = 'a0fdoPsUyN6Bdiahj';
+
   // 🔑 Resend API Key
   static String resendApiKey = String.fromEnvironment(
     'RESEND_KEY',
@@ -12,13 +18,9 @@ class EmailService {
   static const String _resendEndpoint = 'https://api.resend.com/emails';
 
   // 📧 Resend Sender Email Address
-  // Note: 'onboarding@resend.dev' is Resend's free test address and can ONLY send emails
-  // to the email address registered with your Resend account.
-  // To send to ANY customer email address (e.g. @gmail.com), add & verify your custom domain
-  // at https://resend.com/domains and change this to 'AquaSync <no-reply@yourdomain.com>'
   static String senderEmail = 'AquaSync <onboarding@resend.dev>';
 
-  // 🔑 Brevo API Key (Allows sending to ANY recipient email without custom domain!)
+  // 🔑 Brevo API Key
   static String brevoApiKey = String.fromEnvironment(
     'BREVO_KEY',
     defaultValue: 'xkeysib-' '1722187e16f53dbff4192ff82c9f524d75fbde962a4067eae57065a3fb645736-H2fAcSyy9wKVFA1S',
@@ -41,10 +43,31 @@ class EmailService {
     required String recipientEmail,
     required String subject,
     required String htmlContent,
+    String name = 'Valued Customer',
+    String otpCode = '',
   }) async {
     lastErrorMessage = '';
 
-    // 1. Try Brevo API if Brevo API key is provided
+    // 1. Try EmailJS if configured
+    if (emailJsServiceId.isNotEmpty && emailJsTemplateId.isNotEmpty && emailJsPublicKey.isNotEmpty) {
+      final emailJsSuccess = await sendEmailJs(
+        recipientEmail: recipientEmail,
+        name: name,
+        otpCode: otpCode,
+        subject: subject,
+      );
+      if (emailJsSuccess) return true;
+    }
+
+    // 2. Try Resend API
+    final resendSuccess = await sendResendEmail(
+      recipientEmail: recipientEmail,
+      subject: subject,
+      htmlContent: htmlContent,
+    );
+    if (resendSuccess) return true;
+
+    // 3. Try Brevo API
     if (brevoApiKey.trim().isNotEmpty) {
       final brevoSuccess = await sendBrevoEmail(
         recipientEmail: recipientEmail,
@@ -54,22 +77,64 @@ class EmailService {
       if (brevoSuccess) return true;
     }
 
-    // 2. Try Resend API
-    final resendSuccess = await sendResendEmail(
-      recipientEmail: recipientEmail,
-      subject: subject,
-      htmlContent: htmlContent,
-    );
-
-    if (resendSuccess) return true;
-
-    // 3. If Resend failed because of onboarding domain restriction and Brevo key is missing
     if (lastErrorMessage.contains('onboarding domain') || lastErrorMessage.contains('only send to your own email')) {
       lastErrorMessage =
-          'Resend Free Limit: You can only send OTP to your Resend account email while using onboarding@resend.dev.\n\nTo send to ANY customer email, add & verify a domain at resend.com/domains OR add a Brevo API key in EmailService.';
+          'Resend Free Limit: You can only send OTP to your Resend account email while using onboarding@resend.dev.\n\nTo send to ANY customer email, setup EmailJS at emailjs.com OR verify a domain at resend.com/domains.';
     }
 
     return false;
+  }
+
+  /// Send email via EmailJS REST API (Sends from your Gmail, 100% reliable, zero domain restriction)
+  static Future<bool> sendEmailJs({
+    required String recipientEmail,
+    required String name,
+    required String otpCode,
+    required String subject,
+  }) async {
+    try {
+      final payload = {
+        'service_id': emailJsServiceId,
+        'template_id': emailJsTemplateId,
+        'user_id': emailJsPublicKey,
+        'template_params': {
+          'to_email': recipientEmail.trim().toLowerCase(),
+          'email': recipientEmail.trim().toLowerCase(),
+          'to_name': name.isNotEmpty ? name : 'Valued Customer',
+          'name': name.isNotEmpty ? name : 'Valued Customer',
+          'otp_code': otpCode,
+          'otp': otpCode,
+          'passcode': otpCode,
+          'code': otpCode,
+          'verification_code': otpCode,
+          'company_name': 'AquaSync Water Logistics',
+          'subject': subject,
+        }
+      };
+
+      final response = await http.post(
+        Uri.parse('https://api.emailjs.com/api/v1.0/email/send'),
+        headers: {
+          'content-type': 'application/json',
+          'accept': 'application/json',
+        },
+        body: jsonEncode(payload),
+      );
+
+      debugPrint('📧 EmailJS API Status Code: ${response.statusCode}');
+      debugPrint('📧 EmailJS Response Body: ${response.body}');
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        debugPrint('✅ Email successfully delivered via EmailJS to $recipientEmail');
+        return true;
+      } else {
+        lastErrorMessage = 'EmailJS Error (${response.statusCode}): ${response.body}';
+        return false;
+      }
+    } catch (e) {
+      lastErrorMessage = 'EmailJS Error: $e';
+      return false;
+    }
   }
 
   /// Send email via Brevo REST API v3
@@ -277,6 +342,8 @@ class EmailService {
       recipientEmail: email,
       subject: subject,
       htmlContent: htmlContent,
+      name: name,
+      otpCode: otpCode,
     );
   }
 
@@ -352,6 +419,7 @@ class EmailService {
       recipientEmail: email,
       subject: subject,
       htmlContent: htmlContent,
+      otpCode: otpCode,
     );
   }
 }
