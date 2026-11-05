@@ -29,8 +29,14 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Supabase.initialize(
-    url: 'https://qxruxonusvoxshuwxrah.supabase.co',
-    publishableKey: 'sb_publishable_MbMRR6syNwtezcWMke6yXw_Y1cozFRo',
+    url: const String.fromEnvironment(
+      'SUPABASE_URL',
+      defaultValue: 'https://qxruxonusvoxshuwxrah.supabase.co',
+    ),
+    publishableKey: const String.fromEnvironment(
+      'SUPABASE_ANON_KEY',
+      defaultValue: 'sb_publishable_MbMRR6syNwtezcWMke6yXw_Y1cozFRo',
+    ),
   );
 
   await LocalNotificationService.init();

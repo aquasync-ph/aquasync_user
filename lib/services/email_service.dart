@@ -4,14 +4,22 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 class EmailService {
-  // 🔑 EmailJS Configuration (RECOMMENDED & PERMANENT: Sends directly via your Gmail!)
-  // Setup in 2 mins at https://emailjs.com (100% Free, 200 emails/mo, NEVER suspended!)
-  static String emailJsServiceId = 'service_y537d2p';
-  static String emailJsTemplateId = 'template_c4wfds1';
-  static String emailJsPublicKey = 'a0fdoPsUyN6Bdiahj';
+  // 🔑 EmailJS Configuration
+  static String emailJsServiceId = const String.fromEnvironment(
+    'EMAILJS_SERVICE_ID',
+    defaultValue: 'service_y537d2p',
+  );
+  static String emailJsTemplateId = const String.fromEnvironment(
+    'EMAILJS_TEMPLATE_ID',
+    defaultValue: 'template_c4wfds1',
+  );
+  static String emailJsPublicKey = const String.fromEnvironment(
+    'EMAILJS_PUBLIC_KEY',
+    defaultValue: 'a0fdoPsUyN6Bdiahj',
+  );
 
   // 🔑 Resend API Key
-  static String resendApiKey = String.fromEnvironment(
+  static String resendApiKey = const String.fromEnvironment(
     'RESEND_KEY',
     defaultValue: 're_' 'j4kL8jkH_9buWrsVP83txeJ1Tb48vqxcU',
   );
@@ -21,7 +29,7 @@ class EmailService {
   static String senderEmail = 'AquaSync <onboarding@resend.dev>';
 
   // 🔑 Brevo API Key
-  static String brevoApiKey = String.fromEnvironment(
+  static String brevoApiKey = const String.fromEnvironment(
     'BREVO_KEY',
     defaultValue: 'xkeysib-' '1722187e16f53dbff4192ff82c9f524d75fbde962a4067eae57065a3fb645736-H2fAcSyy9wKVFA1S',
   );
