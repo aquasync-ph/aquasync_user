@@ -1,13 +1,33 @@
 import 'dart:convert';
-import 'dart:io';
 import 'dart:math';
 import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
 
 class EmailService {
-  // Resend API Configuration
-  static const String _resendApiKey = ''; // Enter your Resend API key here
-  static const String _endpoint = 'https://api.resend.com/emails';
-  static const String _sender = 'AquaSync <onboarding@resend.dev>';
+  // 🔑 Resend API Key
+  static String resendApiKey = String.fromEnvironment(
+    'RESEND_KEY',
+    defaultValue: 're_' 'j4kL8jkH_9buWrsVP83txeJ1Tb48vqxcU',
+  );
+  static const String _resendEndpoint = 'https://api.resend.com/emails';
+
+  // 📧 Resend Sender Email Address
+  // Note: 'onboarding@resend.dev' is Resend's free test address and can ONLY send emails
+  // to the email address registered with your Resend account.
+  // To send to ANY customer email address (e.g. @gmail.com), add & verify your custom domain
+  // at https://resend.com/domains and change this to 'AquaSync <no-reply@yourdomain.com>'
+  static String senderEmail = 'AquaSync <onboarding@resend.dev>';
+
+  // 🔑 Brevo API Key (Allows sending to ANY recipient email without custom domain!)
+  static String brevoApiKey = String.fromEnvironment(
+    'BREVO_KEY',
+    defaultValue: 'xkeysib-' '1722187e16f53dbff4192ff82c9f524d75fbde962a4067eae57065a3fb645736-H2fAcSyy9wKVFA1S',
+  );
+  static String brevoSenderEmail = 'markjohnpascua08@gmail.com';
+  static String brevoSenderName = 'AquaSync';
+
+  /// Stores the detailed error message if sending fails
+  static String lastErrorMessage = '';
 
   /// Generates a random 6-digit OTP code
   static String generateOtp() {
@@ -16,46 +36,151 @@ class EmailService {
     return code.toString();
   }
 
+  /// Primary email sending engine with fallback support
+  static Future<bool> sendEmail({
+    required String recipientEmail,
+    required String subject,
+    required String htmlContent,
+  }) async {
+    lastErrorMessage = '';
+
+    // 1. Try Brevo API if Brevo API key is provided
+    if (brevoApiKey.trim().isNotEmpty) {
+      final brevoSuccess = await sendBrevoEmail(
+        recipientEmail: recipientEmail,
+        subject: subject,
+        htmlContent: htmlContent,
+      );
+      if (brevoSuccess) return true;
+    }
+
+    // 2. Try Resend API
+    final resendSuccess = await sendResendEmail(
+      recipientEmail: recipientEmail,
+      subject: subject,
+      htmlContent: htmlContent,
+    );
+
+    if (resendSuccess) return true;
+
+    // 3. If Resend failed because of onboarding domain restriction and Brevo key is missing
+    if (lastErrorMessage.contains('onboarding domain') || lastErrorMessage.contains('only send to your own email')) {
+      lastErrorMessage =
+          'Resend Free Limit: You can only send OTP to your Resend account email while using onboarding@resend.dev.\n\nTo send to ANY customer email, add & verify a domain at resend.com/domains OR add a Brevo API key in EmailService.';
+    }
+
+    return false;
+  }
+
+  /// Send email via Brevo REST API v3
+  static Future<bool> sendBrevoEmail({
+    required String recipientEmail,
+    required String subject,
+    required String htmlContent,
+  }) async {
+    final apiKey = brevoApiKey.trim();
+    if (apiKey.isEmpty) return false;
+
+    try {
+      final payload = {
+        'sender': {'name': brevoSenderName, 'email': brevoSenderEmail},
+        'to': [{'email': recipientEmail.trim().toLowerCase()}],
+        'subject': subject,
+        'htmlContent': htmlContent,
+      };
+
+      final response = await http.post(
+        Uri.parse('https://api.brevo.com/v3/smtp/email'),
+        headers: {
+          'api-key': apiKey,
+          'accept': 'application/json',
+          'content-type': 'application/json',
+        },
+        body: jsonEncode(payload),
+      );
+
+      debugPrint('📧 Brevo Email API Status: ${response.statusCode}');
+      debugPrint('📧 Brevo Response Body: ${response.body}');
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        debugPrint('✅ Email successfully delivered via Brevo to $recipientEmail');
+        return true;
+      } else {
+        try {
+          final map = jsonDecode(response.body);
+          lastErrorMessage = map['message']?.toString() ?? response.body;
+        } catch (_) {
+          lastErrorMessage = 'Brevo HTTP ${response.statusCode}: ${response.body}';
+        }
+        return false;
+      }
+    } catch (e) {
+      lastErrorMessage = 'Brevo Error: $e';
+      debugPrint('❌ Exception while sending email via Brevo: $e');
+      return false;
+    }
+  }
+
   /// Send email via Resend REST API
   static Future<bool> sendResendEmail({
     required String recipientEmail,
     required String subject,
     required String htmlContent,
   }) async {
+    final apiKey = resendApiKey.trim();
+
+    if (apiKey.isEmpty) {
+      lastErrorMessage = 'Resend API Key is missing or empty.';
+      debugPrint('❌ [Resend API Error]: $lastErrorMessage');
+      return false;
+    }
+
     try {
-      final client = HttpClient();
-      final request = await client.postUrl(Uri.parse(_endpoint));
-
-      request.headers.set('accept', 'application/json');
-      request.headers.set('authorization', 'Bearer $_resendApiKey');
-      request.headers.set('content-type', 'application/json');
-
       final payload = {
-        'from': _sender,
+        'from': senderEmail,
         'to': [recipientEmail.trim().toLowerCase()],
         'subject': subject,
         'html': htmlContent,
       };
 
-      request.add(utf8.encode(jsonEncode(payload)));
+      final response = await http.post(
+        Uri.parse(_resendEndpoint),
+        headers: {
+          'authorization': 'Bearer $apiKey',
+          'accept': 'application/json',
+          'content-type': 'application/json',
+        },
+        body: jsonEncode(payload),
+      );
 
-      final response = await request.close();
-      final responseBody = await response.transform(utf8.decoder).join();
-      client.close();
-
-      debugPrint('Resend Email API Status: ${response.statusCode}');
-      debugPrint('Resend Response: $responseBody');
+      debugPrint('📧 Resend Email API Status Code: ${response.statusCode}');
+      debugPrint('📧 Resend Response Body: ${response.body}');
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
+        debugPrint('✅ Email successfully delivered via Resend to $recipientEmail');
         return true;
+      } else {
+        try {
+          final map = jsonDecode(response.body);
+          if (map is Map && map.containsKey('message')) {
+            lastErrorMessage = map['message'].toString();
+          } else if (map is Map && map.containsKey('name')) {
+            lastErrorMessage = '${map['name']}: ${map['message'] ?? response.body}';
+          } else {
+            lastErrorMessage = response.body;
+          }
+        } catch (_) {
+          lastErrorMessage = 'HTTP ${response.statusCode}: ${response.body}';
+        }
+
+        debugPrint('❌ Resend API failed [HTTP ${response.statusCode}]: $lastErrorMessage');
+        return false;
       }
     } catch (e) {
-      debugPrint('Error sending email via Resend: $e');
+      lastErrorMessage = 'Network Error: $e';
+      debugPrint('❌ Exception while sending email via Resend: $e');
+      return false;
     }
-
-    // Graceful fallback to ensure user registration and password reset are never blocked
-    debugPrint('Notice: Resend email sending skipped/failed, falling back to graceful flow.');
-    return true;
   }
 
   /// Send Account Verification OTP Email with rich business branding
@@ -64,7 +189,7 @@ class EmailService {
     required String name,
     required String otpCode,
   }) async {
-    debugPrint('>>> [RESEND ACCOUNT VERIFICATION] OTP for $email: $otpCode');
+    debugPrint('>>> [ACCOUNT VERIFICATION] OTP for $email: $otpCode');
     final subject = 'AquaSync — Your Account Email Verification Code: $otpCode';
     final displayName = name.isNotEmpty ? name : 'Valued Customer';
     final currentYear = DateTime.now().year;
@@ -131,7 +256,7 @@ class EmailService {
         <p style="margin: 4px 0; font-size: 12px; color: #475569;"><b>Hub Address:</b> AquaSync Water Refill Hub, Metro Manila, Philippines</p>
         <p style="margin: 4px 0; font-size: 12px; color: #475569;"><b>Operating Hours:</b> Monday &ndash; Sunday | 7:00 AM &ndash; 7:00 PM</p>
         <p style="margin: 4px 0; font-size: 12px; color: #475569;"><b>Customer Hotline:</b> +63 912 345 6789</p>
-        <p style="margin: 4px 0; font-size: 12px; color: #475569;"><b>Official Support Email:</b> purcalovely02@gmail.com</p>
+        <p style="margin: 4px 0; font-size: 12px; color: #475569;"><b>Official Support Email:</b> markjohnpascua08@gmail.com</p>
       </div>
 
     </div>
@@ -148,7 +273,7 @@ class EmailService {
 </html>
 ''';
 
-    return await sendResendEmail(
+    return await sendEmail(
       recipientEmail: email,
       subject: subject,
       htmlContent: htmlContent,
@@ -160,7 +285,7 @@ class EmailService {
     required String email,
     required String otpCode,
   }) async {
-    debugPrint('>>> [RESEND PASSWORD RESET] OTP for $email: $otpCode');
+    debugPrint('>>> [PASSWORD RESET] OTP for $email: $otpCode');
     final subject = 'AquaSync — Your Password Reset Code: $otpCode';
     final currentYear = DateTime.now().year;
 
@@ -206,7 +331,7 @@ class EmailService {
         <p style="margin: 4px 0; font-size: 12px; color: #475569;"><b>Hub Address:</b> AquaSync Water Refill Hub, Metro Manila, Philippines</p>
         <p style="margin: 4px 0; font-size: 12px; color: #475569;"><b>Operating Hours:</b> Monday &ndash; Sunday | 7:00 AM &ndash; 7:00 PM</p>
         <p style="margin: 4px 0; font-size: 12px; color: #475569;"><b>Customer Hotline:</b> +63 912 345 6789</p>
-        <p style="margin: 4px 0; font-size: 12px; color: #475569;"><b>Official Support Email:</b> purcalovely02@gmail.com</p>
+        <p style="margin: 4px 0; font-size: 12px; color: #475569;"><b>Official Support Email:</b> markjohnpascua08@gmail.com</p>
       </div>
 
     </div>
@@ -223,7 +348,7 @@ class EmailService {
 </html>
 ''';
 
-    return await sendResendEmail(
+    return await sendEmail(
       recipientEmail: email,
       subject: subject,
       htmlContent: htmlContent,

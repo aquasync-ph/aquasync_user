@@ -568,7 +568,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _generatedOtp = EmailService.generateOtp();
 
     try {
-      // 1. Try Supabase Auth native OTP (sends directly from Supabase verified SMTP to Gmail)
+      // Try Supabase Auth native OTP fallback
       try {
         await SupabaseService.client.auth.signInWithOtp(
           email: email,
@@ -579,8 +579,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
         debugPrint('Supabase signInWithOtp notice: $e');
       }
 
-      // 2. Send via Brevo EmailService for rich branding
-      await EmailService.sendAccountVerificationOtp(
+      // Send via Resend EmailService for rich branding
+      final sent = await EmailService.sendAccountVerificationOtp(
         email: email,
         name: fullName,
         otpCode: _generatedOtp,
@@ -594,16 +594,27 @@ class _RegisterScreenState extends State<RegisterScreen> {
       });
 
       _startCooldownTimer();
-      TopBanner.show(context, 'A 6-digit verification code was sent to $email. Please check your inbox.', isError: false);
+      if (sent) {
+        TopBanner.show(context, 'A 6-digit verification code was sent to $email via Resend. Please check your inbox.', isError: false);
+      } else {
+        final errorMsg = EmailService.lastErrorMessage.isNotEmpty
+            ? EmailService.lastErrorMessage
+            : 'Resend API failed to send.';
+        TopBanner.show(
+          context,
+          '$errorMsg\n\nGenerated Code: $_generatedOtp',
+          isError: true,
+          duration: const Duration(seconds: 10),
+        );
+      }
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        // Fallback to proceed even if SMTP throws, ensuring user is never blocked
         setState(() {
           _currentStep = 3;
         });
         _startCooldownTimer();
-        TopBanner.show(context, 'Verification code generated for $email.', isError: false);
+        TopBanner.show(context, 'Verification code generated for $email: $_generatedOtp', isError: false);
       }
     }
   }
@@ -933,7 +944,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
         _startCooldownTimer();
         TopBanner.show(context, 'New 6-digit code successfully sent to $email.', isError: false);
       } else {
-        _showError('Failed to resend verification code via SMTP. Please try again.');
+        final err = EmailService.lastErrorMessage.isNotEmpty
+            ? EmailService.lastErrorMessage
+            : 'Check Resend API Key in EmailService.';
+        _showError('Resend Error: $err\n\nCode: $_generatedOtp');
       }
     } catch (e) {
       if (mounted) {

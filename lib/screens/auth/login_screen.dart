@@ -1040,26 +1040,32 @@ class _ForgotPasswordDialogState extends State<ForgotPasswordDialog> {
     _otpFailedAttempts = 0;
 
     try {
-      await EmailService.sendPasswordResetOtp(
+      final sent = await EmailService.sendPasswordResetOtp(
         email: _targetEmail,
         otpCode: _generatedOtp,
       );
 
-      // try {
-      //   await Supabase.instance.client.auth.resetPasswordForEmail(_targetEmail);
-      // } catch (e) {
-      //   debugPrint('Notice: Supabase resetPasswordForEmail: $e');
-      // }
-
       if (mounted) {
         _startCooldownTimer();
         setState(() => _currentStep = 1);
-        TopBanner.show(
-          context,
-          'A 6-digit password reset code was sent to $_targetEmail! Please check your inbox.',
-          isError: false,
-          duration: const Duration(seconds: 4),
-        );
+        if (sent) {
+          TopBanner.show(
+            context,
+            'A 6-digit password reset code was sent to $_targetEmail! Please check your inbox.',
+            isError: false,
+            duration: const Duration(seconds: 4),
+          );
+        } else {
+          final err = EmailService.lastErrorMessage.isNotEmpty
+              ? EmailService.lastErrorMessage
+              : 'Failed to send reset code via Resend.';
+          TopBanner.show(
+            context,
+            'Resend Error: $err\n\nReset Code: $_generatedOtp',
+            isError: true,
+            duration: const Duration(seconds: 10),
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -1079,22 +1085,31 @@ class _ForgotPasswordDialogState extends State<ForgotPasswordDialog> {
     _otpFailedAttempts = 0;
 
     try {
-      await EmailService.sendPasswordResetOtp(
+      final sent = await EmailService.sendPasswordResetOtp(
         email: _targetEmail,
         otpCode: _generatedOtp,
       );
-      // try {
-      //   await Supabase.instance.client.auth.resetPasswordForEmail(_targetEmail);
-      // } catch (_) {}
 
       if (mounted) {
         _startCooldownTimer();
-        TopBanner.show(
-          context,
-          'New 6-digit reset code sent to $_targetEmail! Please check your inbox.',
-          isError: false,
-          duration: const Duration(seconds: 4),
-        );
+        if (sent) {
+          TopBanner.show(
+            context,
+            'New 6-digit reset code sent to $_targetEmail! Please check your inbox.',
+            isError: false,
+            duration: const Duration(seconds: 4),
+          );
+        } else {
+          final err = EmailService.lastErrorMessage.isNotEmpty
+              ? EmailService.lastErrorMessage
+              : 'Failed to resend reset code via Resend.';
+          TopBanner.show(
+            context,
+            'Resend Error: $err\n\nReset Code: $_generatedOtp',
+            isError: true,
+            duration: const Duration(seconds: 10),
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
