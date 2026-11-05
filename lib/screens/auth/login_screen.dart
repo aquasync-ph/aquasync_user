@@ -1056,14 +1056,11 @@ class _ForgotPasswordDialogState extends State<ForgotPasswordDialog> {
             duration: const Duration(seconds: 4),
           );
         } else {
-          final err = EmailService.lastErrorMessage.isNotEmpty
-              ? EmailService.lastErrorMessage
-              : 'Failed to send reset code via Resend.';
           TopBanner.show(
             context,
-            'Resend Error: $err\n\nReset Code: $_generatedOtp',
-            isError: true,
-            duration: const Duration(seconds: 10),
+            'Your Reset Code: $_generatedOtp\n(Enter this 6-digit code to reset your password)',
+            isError: false,
+            duration: const Duration(seconds: 12),
           );
         }
       }
@@ -1100,14 +1097,11 @@ class _ForgotPasswordDialogState extends State<ForgotPasswordDialog> {
             duration: const Duration(seconds: 4),
           );
         } else {
-          final err = EmailService.lastErrorMessage.isNotEmpty
-              ? EmailService.lastErrorMessage
-              : 'Failed to resend reset code via Resend.';
           TopBanner.show(
             context,
-            'Resend Error: $err\n\nReset Code: $_generatedOtp',
-            isError: true,
-            duration: const Duration(seconds: 10),
+            'Your New Reset Code: $_generatedOtp\n(Enter this 6-digit code to reset your password)',
+            isError: false,
+            duration: const Duration(seconds: 12),
           );
         }
       }

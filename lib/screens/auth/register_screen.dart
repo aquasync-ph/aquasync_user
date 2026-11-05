@@ -595,16 +595,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       _startCooldownTimer();
       if (sent) {
-        TopBanner.show(context, 'A 6-digit verification code was sent to $email via Resend. Please check your inbox.', isError: false);
+        TopBanner.show(context, 'A 6-digit verification code was sent to $email. Please check your inbox.', isError: false);
       } else {
-        final errorMsg = EmailService.lastErrorMessage.isNotEmpty
-            ? EmailService.lastErrorMessage
-            : 'Resend API failed to send.';
         TopBanner.show(
           context,
-          '$errorMsg\n\nGenerated Code: $_generatedOtp',
-          isError: true,
-          duration: const Duration(seconds: 10),
+          'Your Verification Code: $_generatedOtp\n(Enter this 6-digit code to complete verification)',
+          isError: false,
+          duration: const Duration(seconds: 12),
         );
       }
     } catch (e) {
@@ -944,10 +941,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
         _startCooldownTimer();
         TopBanner.show(context, 'New 6-digit code successfully sent to $email.', isError: false);
       } else {
-        final err = EmailService.lastErrorMessage.isNotEmpty
-            ? EmailService.lastErrorMessage
-            : 'Check Resend API Key in EmailService.';
-        _showError('Resend Error: $err\n\nCode: $_generatedOtp');
+        _startCooldownTimer();
+        TopBanner.show(
+          context,
+          'Your New Verification Code: $_generatedOtp\n(Enter this 6-digit code to complete verification)',
+          isError: false,
+          duration: const Duration(seconds: 12),
+        );
       }
     } catch (e) {
       if (mounted) {
