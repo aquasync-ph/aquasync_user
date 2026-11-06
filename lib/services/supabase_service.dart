@@ -916,6 +916,25 @@ class SupabaseService {
     return null;
   }
 
+  /// Fetch customer's assigned RFID Loyalty Card details
+  static Future<Map<String, dynamic>?> fetchCustomerRfid(String customerId) async {
+    try {
+      final record = await client
+          .from('rfid_qr_records')
+          .select('code, is_active, created_at')
+          .eq('customer_id', customerId)
+          .eq('code_type', 'RFID')
+          .maybeSingle();
+
+      if (record != null) {
+        return Map<String, dynamic>.from(record);
+      }
+    } catch (e) {
+      debugPrint('Error fetching customer RFID: $e');
+    }
+    return null;
+  }
+
   // --- REALTIME SUBSCRIPTIONS ---
   static void subscribeToCustomerOrders({
     required String customerId,

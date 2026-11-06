@@ -422,6 +422,109 @@ class _ProfilePageState extends State<ProfilePage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // LOYALTY RFID CARD SECTION
+                  Text('LOYALTY RFID CARD', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: subTextColor, letterSpacing: 1.2)),
+                  const SizedBox(height: 14),
+                  FutureBuilder<Map<String, dynamic>?>(
+                    future: profile != null ? SupabaseService.fetchCustomerRfid(profile.id) : Future.value(null),
+                    builder: (context, snapshot) {
+                      final rfidData = snapshot.data;
+                      final bool hasCard = rfidData != null && (rfidData['code']?.toString().isNotEmpty ?? false);
+                      final String cardUid = hasCard ? rfidData['code'].toString() : 'No Loyalty Card Assigned';
+                      final bool isActive = hasCard && (rfidData['is_active'] == true);
+
+                      return Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: isDark
+                                ? [const Color(0xFF0F2942), const Color(0xFF0369A1)]
+                                : [const Color(0xFF0284C7), const Color(0xFF0F172A)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(24),
+                          boxShadow: [
+                            BoxShadow(color: const Color(0xFF0284C7).withValues(alpha: 0.3), blurRadius: 16, offset: const Offset(0, 6)),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text(
+                                  'AQUASYNC LOYALTY CARD',
+                                  style: TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1.5),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: !hasCard
+                                        ? Colors.white24
+                                        : isActive
+                                            ? const Color(0xFF10B981).withValues(alpha: 0.3)
+                                            : Colors.redAccent.withValues(alpha: 0.3),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        hasCard ? (isActive ? Icons.check_circle_rounded : Icons.block_rounded) : Icons.help_outline_rounded,
+                                        size: 14,
+                                        color: !hasCard ? Colors.white70 : (isActive ? Colors.greenAccent : Colors.redAccent),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        !hasCard ? 'UNASSIGNED' : (isActive ? 'ACTIVE' : 'BLOCKED'),
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                          color: !hasCard ? Colors.white70 : (isActive ? Colors.greenAccent : Colors.redAccent),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 20),
+                            Text(
+                              (profile?.fullName ?? 'AQUASYNC CUSTOMER').toUpperCase(),
+                              style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+                            ),
+                            const SizedBox(height: 6),
+                            Row(
+                              children: [
+                                const Icon(Icons.badge_outlined, size: 16, color: Color(0xFF7DD3FC)),
+                                const SizedBox(width: 6),
+                                Text(
+                                  cardUid,
+                                  style: TextStyle(
+                                    color: hasCard ? const Color(0xFF7DD3FC) : Colors.white54,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    fontFamily: 'monospace',
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 14),
+                            Text(
+                              hasCard
+                                  ? 'Tap this physical RFID card at POS counters or on delivery for instant verification & loyalty discounts.'
+                                  : 'Ask station admin to assign an RFID loyalty card to your account.',
+                              style: const TextStyle(color: Colors.white70, fontSize: 11, height: 1.4),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 24),
+
                   Text('ACCOUNT SETTINGS', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: subTextColor, letterSpacing: 1.2)),
                   const SizedBox(height: 14),
                   Container(
